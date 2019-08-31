@@ -1,0 +1,21 @@
+def do_POST(self):
+        self._set_headers()
+        print("in post method")
+        self.data_string = self.rfile.read(int(self.headers['Content-Length']))
+
+        self.send_response(200)
+        self.end_headers()
+
+        recv_data = json.loads(self.data_string.decode('UTF-8').strip())
+        print("{}".format(recv_data))
+
+        doc_type = recv_data['doc_type']
+        keyword = recv_data['keyword']
+        search_type = recv_data['search_type']
+        url = recv_data['url']
+
+        highligh_image = highligh(keyword, url)
+
+        self.wfile.write(json.dumps({
+            'image': str(highligh_image)
+        }).encode())

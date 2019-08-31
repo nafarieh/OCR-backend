@@ -1,0 +1,79 @@
+def do_GET(self):
+        self._set_headers()
+        print("in get method")
+        self.data_string = self.rfile.read(int(self.headers['Content-Length']))
+
+        self.send_response(200)
+        self.end_headers()
+
+        recv_data = json.loads(self.data_string.decode('UTF-8').strip())
+        print("{}".format(recv_data))
+
+        doc_type = recv_data['doc_type']
+        keyword = recv_data['keyword']
+        search_type = recv_data['search_type']
+        counter = int(recv_data['counter'])
+
+        results = ""
+        if search_type == 'match':
+            results = es.search(index='library6', doc_type=doc_type, body={"query": {"match": {"content": keyword}}})
+        elif search_type == 'fuzzy':
+            results = es.search(index='library6', doc_type=doc_type,
+                                body={"query": {"regexp": {"content": {"value": "@" + keyword + ".*"}}}})
+            # results = es.search(index="dl-index", doc_type=doc_type,
+            #                     body={"query": {"regexp": {"content": {"value": "@" + keyword + ".*"}}}})
+
+        # print(results)
+        url = 'http://' + HOST + ':' + str(PORT) + '/library6/' + doc_type + '/'
+
+        print("\n %d documents found \n" % results['hits']['total'])
+        total = results['hits']['total']
+
+        n = 3
+        selected_list = []
+        id_list = []
+        url_list = []
+        ranked_ocr = []
+
+        if total > 0:
+            l = 0
+            for doc in results['hits']['hits']:
+                print("%s)" % (doc['_id']))
+                # print("%s)" % (doc['_source']['author']))
+                l = l + 1
+                rank_image = rank(keyword, doc['_source']['content'])
+                id_list.append([rank_image, url + str(doc['_id'] + '/_source')])
+
+            ranked_ocr = sorted(id_list, key=lambda x: x[1])
+
+            print("**************************************************")
+
+            print(ranked_ocr)
+            print("**********************zahra1****************************")
+            print(id_list)
+            print("**************************************************")
+
+
+            if counter * n < len(id_list):
+                selected_list = ranked_ocr[(counter - 1) * n:counter * n]
+
+            elif counter * n >= len(id_list):
+                selected_list = ranked_ocr[(counter - 1) * n:]
+
+            for row in selected_list:
+                url_list.append(row[1])
+
+            print("**********************zahra2****************************")
+            print(url_list)
+            print("**********************zahra2****************************")
+
+
+        self.wfile.write(json.dumps({
+            'total': total,
+            'url': url_list,
+        }).encode())
+
+        # self.send_response(200)
+        return
+
+ 

@@ -1,3 +1,0 @@
-clone
-
-curl -X OCR -H 'Connt-Type: application/json' -d '{"file_name":"zahra","language":"fas","doc_type":"jpg","address":"/home/toocr/Documents/2-ocr/3-dataset/3-dataset/a/116.JPG","image_checkbox":"0"}'  http://192.168.96.88:7000

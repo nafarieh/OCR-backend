@@ -1,0 +1,13 @@
+def rank(text, hocr):
+    # expression = text.splite()
+    rank_list = []
+    tree = etree.fromstring(hocr)
+    find = tree.xpath('.//span[contains(text(),"' + text + '")]')
+
+    for f in find:
+        title = f.attrib['title'].split()
+        rank_list.append(int(title[-1]))
+
+    max_rank = max(rank_list)
+    return max_rank
+

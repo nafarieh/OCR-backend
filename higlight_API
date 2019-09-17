@@ -1,0 +1,42 @@
+def highligh(text, url):
+    encode_image = requests.get(url).json()
+    jpg_bytes = base64.b64decode(encode_image['image2'].encode())
+    image_pil = Image.open(io.BytesIO(jpg_bytes))
+
+    if image_pil.mode != 'RGB':
+        image_pil = image_pil.convert('RGB')
+
+    img = np.array(image_pil)
+    w = img.shape[0]
+    h = img.shape[1]
+    blank_imag = np.zeros((w, h, 3), np.uint8) + 255
+
+    req = requests.get(url).json()
+    hocr = req['content']
+    tree = etree.fromstring(hocr)
+    find = tree.xpath('.//span[contains(text(),"' + text + '")]')
+    for f in find:
+        # print(f.text, f.attrib['title'])
+        title = f.attrib['title'].split()
+        x1 = int(int(title[1]) / 2)
+        y1 = int(int(title[2]) / 2)
+        x2 = int(int(title[3]) / 2)
+        y2 = int(int((title[4]).split(';')[0]) / 2)
+        # print(x1,y1,x2,y2)
+        cv2.rectangle(blank_imag, (x1, y1), (x2, y2), (250, 250, 0), -1)
+
+    print("****zahra****")
+    print(blank_imag.shape)
+    print(img.shape)
+    print("****zahra****")
+
+    final = cv2.bitwise_and(blank_imag, np.array(img))
+    highlight_image = Image.fromarray(final, 'RGB')
+
+    buffered = BytesIO()
+    highlight_image.save(buffered, format="JPEG")
+    encoded_string = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    # print(encoded_string)
+    print('highlighted image was send')
+
+    return encoded_string
